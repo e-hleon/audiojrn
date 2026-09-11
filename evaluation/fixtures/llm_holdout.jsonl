@@ -1,0 +1,15 @@
+{"id":"holdout-001","text":"Hemos acordado enviar el formulario el jueves.","expected":{"decisions":[{"evidence":"Hemos acordado enviar el formulario el jueves."}],"tasks":[],"reminders":[]}}
+{"id":"holdout-002","text":"Clara revisará los permisos antes del viernes.","expected":{"decisions":[],"tasks":[{"evidence":"Clara revisará los permisos antes del viernes.","assignee":"Clara","due_date":"viernes"}],"reminders":[]}}
+{"id":"holdout-003","text":"Acuérdate de llamar a Marta después de comer.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Acuérdate de llamar a Marta después de comer."}]}}
+{"id":"holdout-004","text":"No compraremos el equipo este trimestre.","expected":{"decisions":[{"evidence":"No compraremos el equipo este trimestre."}],"tasks":[],"reminders":[]}}
+{"id":"holdout-005","text":"Quizá deberíamos cambiar de proveedor, pero no hay ninguna decisión.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"holdout-006","text":"Yo enviaré el presupuesto y Luis confirmará la recepción.","expected":{"decisions":[],"tasks":[{"evidence":"Yo enviaré el presupuesto","assignee":null,"due_date":null},{"evidence":"Luis confirmará la recepción.","assignee":"Luis","due_date":null}],"reminders":[]}}
+{"id":"holdout-007","text":"Decidimos mantener la reunión en línea.","expected":{"decisions":[{"evidence":"Decidimos mantener la reunión en línea."}],"tasks":[],"reminders":[]}}
+{"id":"holdout-008","text":"Recuérdame revisar el contrato en noviembre.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Recuérdame revisar el contrato en noviembre."}]}}
+{"id":"holdout-009","text":"El informe ya está terminado y no requiere acciones.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"holdout-010","text":"Nuria reservará una sala, aunque todavía no sabemos cuál.","expected":{"decisions":[],"tasks":[{"evidence":"Nuria reservará una sala","assignee":"Nuria","due_date":null}],"reminders":[]}}
+{"id":"holdout-011","text":"Acordamos cancelar la prueba del viernes.","expected":{"decisions":[{"evidence":"Acordamos cancelar la prueba del viernes."}],"tasks":[],"reminders":[]}}
+{"id":"holdout-012","text":"Por favor, recuerda guardar una copia del documento.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Por favor, recuerda guardar una copia del documento."}]}}
+{"id":"holdout-013","text":"Marcos preparará los datos y yo comprobaré los resultados mañana.","expected":{"decisions":[],"tasks":[{"evidence":"Marcos preparará los datos","assignee":"Marcos","due_date":null},{"evidence":"yo comprobaré los resultados mañana.","assignee":null,"due_date":"mañana"}],"reminders":[]}}
+{"id":"holdout-014","text":"Hemos elegido la alternativa A para la presentación.","expected":{"decisions":[{"evidence":"Hemos elegido la alternativa A para la presentación."}],"tasks":[],"reminders":[]}}
+{"id":"holdout-015","text":"No olvides pedir cita para la próxima semana.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"No olvides pedir cita para la próxima semana."}]}}

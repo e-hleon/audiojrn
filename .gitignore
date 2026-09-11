@@ -1,0 +1,42 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Audio and personal data
+*.wav
+*.mp3
+*.m4a
+*.opus
+*.flac
+*.ogg
+*.aac
+*.webm
+
+# Models and runtime data
+models/
+*.bin
+*.safetensors
+data/
+tmp/
+.evaluation-cache/
+evaluation/results/
+evaluation/figures/
+
+# Android
+android/.gradle/
+android/**/build/
+android/local.properties
+android/*.apk
+
+# IDE / OS
+.vscode/
+.idea/
+*:Zone.Identifier

@@ -1,0 +1,36 @@
+{"id":"case-001","text":"Decidimos publicar la versión 2 el viernes.","expected":{"decisions":[{"evidence":"Decidimos publicar la versión 2 el viernes."}],"tasks":[],"reminders":[]}}
+{"id":"case-002","text":"Ana preparará el informe antes del lunes.","expected":{"decisions":[],"tasks":[{"evidence":"Ana preparará el informe antes del lunes.","assignee":"Ana","due_date":"lunes"}],"reminders":[]}}
+{"id":"case-003","text":"Recuérdame llamar al dentista mañana.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Recuérdame llamar al dentista mañana."}]}}
+{"id":"case-004","text":"Luis se encargará de enviar el contrato el 12 de octubre.","expected":{"decisions":[],"tasks":[{"evidence":"Luis se encargará de enviar el contrato el 12 de octubre.","assignee":"Luis","due_date":"12 de octubre"}],"reminders":[]}}
+{"id":"case-005","text":"No hace falta que compremos más café.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-006","text":"Ayer terminé la migración y todo funciona correctamente.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-007","text":"Quizá podríamos visitar Valencia algún día.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-008","text":"El equipo acordó usar PostgreSQL. Marta documentará la configuración.","expected":{"decisions":[{"evidence":"El equipo acordó usar PostgreSQL."}],"tasks":[{"evidence":"Marta documentará la configuración.","assignee":"Marta","due_date":null}],"reminders":[]}}
+{"id":"case-009","text":"Me gustaría aprender francés, pero no he decidido cuándo.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-010","text":"Apúntame que el martes tenemos revisión con el cliente.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Apúntame que el martes tenemos revisión con el cliente."}]}}
+{"id":"case-011","text":"Tenemos que revisar el presupuesto.","expected":{"decisions":[],"tasks":[{"evidence":"Tenemos que revisar el presupuesto.","assignee":null,"due_date":null}],"reminders":[]}}
+{"id":"case-012","text":"¿Puedes enviar las diapositivas? Sí, las enviaré esta tarde.","expected":{"decisions":[],"tasks":[{"evidence":"las enviaré esta tarde.","assignee":null,"due_date":null}],"reminders":[]}}
+{"id":"case-013","text":"Acordamos no asistir a la conferencia este año.","expected":{"decisions":[{"evidence":"Acordamos no asistir a la conferencia este año."}],"tasks":[],"reminders":[]}}
+{"id":"case-014","text":"Cuando tengamos tiempo limpiaremos el almacén.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-015","text":"Recuerda que el seguro vence en diciembre.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Recuerda que el seguro vence en diciembre."}]}}
+{"id":"case-016","text":"Pedro y yo decidimos aplazar la reunión. Pedro reservará otra sala.","expected":{"decisions":[{"evidence":"Pedro y yo decidimos aplazar la reunión."}],"tasks":[{"evidence":"Pedro reservará otra sala.","assignee":"Pedro","due_date":null}],"reminders":[]}}
+{"id":"case-017","text":"La película fue entretenida y cenamos pasta.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-018","text":"No voy a llamar a Juan mañana.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-019","text":"Para el 20/09, recuerda renovar el certificado.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"recuerda renovar el certificado."}]}}
+{"id":"case-020","text":"Hemos decidido mantener el presupuesto actual y Elena revisará las facturas.","expected":{"decisions":[{"evidence":"Hemos decidido mantener el presupuesto actual"}],"tasks":[{"evidence":"Elena revisará las facturas.","assignee":"Elena","due_date":null}],"reminders":[]}}
+{"id":"case-021","text":"Tal vez deberíamos cambiar de proveedor, aunque no es urgente.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-022","text":"Yo prepararé la presentación y tú comprueba el proyector el jueves.","expected":{"decisions":[],"tasks":[{"evidence":"Yo prepararé la presentación","assignee":null,"due_date":null},{"evidence":"tú comprueba el proyector el jueves.","assignee":null,"due_date":"jueves"}],"reminders":[]}}
+{"id":"case-023","text":"Recuérdame comprar pilas cuando vaya al supermercado.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Recuérdame comprar pilas cuando vaya al supermercado."}]}}
+{"id":"case-024","text":"La próxima semana quizá organice los archivos.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-025","text":"Decisión: mantener la reunión en remoto. Carlos enviará el enlace.","expected":{"decisions":[{"evidence":"Decisión: mantener la reunión en remoto."}],"tasks":[{"evidence":"Carlos enviará el enlace.","assignee":"Carlos","due_date":null}],"reminders":[]}}
+{"id":"case-026","text":"El proyecto empezó en enero y ayer corregimos un error.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-027","text":"Acuérdate de llevar los documentos a la cita del viernes.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"Acuérdate de llevar los documentos a la cita del viernes."}]}}
+{"id":"case-028","text":"No olvides que ya envié el formulario.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-029","text":"Decidimos probar el nuevo micrófono y Sara pedirá presupuesto mañana.","expected":{"decisions":[{"evidence":"Decidimos probar el nuevo micrófono"}],"tasks":[{"evidence":"Sara pedirá presupuesto mañana.","assignee":"Sara","due_date":"mañana"}],"reminders":[]}}
+{"id":"case-030","text":"¿Qué tal el viaje? Muy bien, no hay nada pendiente.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-031","text":"Tenemos que hablar con el banco, pero aún no hemos fijado quién lo hará.","expected":{"decisions":[],"tasks":[{"evidence":"Tenemos que hablar con el banco","assignee":null,"due_date":null}],"reminders":[]}}
+{"id":"case-032","text":"Acordamos que no compraremos licencias adicionales. El informe queda terminado.","expected":{"decisions":[{"evidence":"Acordamos que no compraremos licencias adicionales."}],"tasks":[],"reminders":[]}}
+{"id":"case-033","text":"Por favor, recuérdame revisar las métricas el próximo mes.","expected":{"decisions":[],"tasks":[],"reminders":[{"evidence":"recuérdame revisar las métricas el próximo mes."}]}}
+{"id":"case-034","text":"El lunes, Javier actualizará la documentación y yo revisaré los ejemplos.","expected":{"decisions":[],"tasks":[{"evidence":"Javier actualizará la documentación","assignee":"Javier","due_date":"lunes"},{"evidence":"yo revisaré los ejemplos.","assignee":null,"due_date":null}],"reminders":[]}}
+{"id":"case-035","text":"Me encantaría correr una maratón, pero solo es una idea.","expected":{"decisions":[],"tasks":[],"reminders":[]}}
+{"id":"case-036","text":"Hemos elegido la opción B. Recuerda avisar al equipo el miércoles.","expected":{"decisions":[{"evidence":"Hemos elegido la opción B."}],"tasks":[],"reminders":[{"evidence":"Recuerda avisar al equipo el miércoles."}]}}

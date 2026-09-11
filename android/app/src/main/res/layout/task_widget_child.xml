@@ -1,0 +1,4 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:paddingStart="20dp" android:paddingVertical="1dp">
+    <ImageView android:id="@+id/task_widget_check" android:layout_width="34dp" android:layout_height="34dp" android:contentDescription="Completar subtarea" android:padding="7dp"/>
+    <TextView android:id="@+id/task_widget_text" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:maxLines="2" android:textColor="@color/widget_on_surface" android:textSize="14sp"/>
+</LinearLayout>

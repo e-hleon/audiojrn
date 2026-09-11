@@ -1,0 +1,5 @@
+# Dependencias aisladas del benchmark; no forman parte del runtime de producción.
+jiwer==4.0.0
+matplotlib==3.10.6
+datasets==4.1.1
+soundfile==0.13.1
