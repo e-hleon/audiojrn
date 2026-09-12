@@ -17,13 +17,11 @@ CURRENT_CATEGORIES = ("highlights", "tasks", "events")
 
 
 def expected_categories(expected: dict) -> dict:
-    """Map legacy fixtures while reporting the current analysis contract."""
-    if any(category in expected for category in CURRENT_CATEGORIES):
-        return {category: expected.get(category, []) for category in CURRENT_CATEGORIES}
+    """Normalize current and legacy fixture categories without dropping mixed data."""
     return {
-        "highlights": expected.get("decisions", []),
+        "highlights": [*expected.get("highlights", []), *expected.get("decisions", [])],
         "tasks": [*expected.get("tasks", []), *expected.get("reminders", [])],
-        "events": [],
+        "events": expected.get("events", []),
     }
 
 

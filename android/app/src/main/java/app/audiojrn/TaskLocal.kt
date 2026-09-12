@@ -198,7 +198,7 @@ class TaskLocalRepository(private val context: Context, private val database: Ta
 
     private suspend fun acknowledge(sent: LocalTaskEntity, expectedState: TaskSyncState) = database.withTransaction {
         val current = dao.byId(sent.id)
-        if (canAcknowledgeTaskSync(sent, current, expectedState)) {
+        if (current != null && canAcknowledgeTaskSync(sent, current, expectedState)) {
             dao.upsert(current.copy(syncState = TaskSyncState.SYNCED))
         }
     }

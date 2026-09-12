@@ -28,6 +28,15 @@ def test_evaluation_reports_the_current_analysis_categories():
     assert expected_categories({"decisions": [{"evidence": "d"}], "tasks": [], "reminders": [{"evidence": "r"}]}) == {
         "highlights": [{"evidence": "d"}], "tasks": [{"evidence": "r"}], "events": [],
     }
+    assert expected_categories({
+        "highlights": [{"evidence": "h"}], "decisions": [{"evidence": "d"}],
+        "tasks": [{"evidence": "t"}], "reminders": [{"evidence": "r"}],
+        "events": [{"evidence": "e"}],
+    }) == {
+        "highlights": [{"evidence": "h"}, {"evidence": "d"}],
+        "tasks": [{"evidence": "t"}, {"evidence": "r"}],
+        "events": [{"evidence": "e"}],
+    }
 
 
 def test_fixture_is_readable_and_report_supports_small_data(tmp_path, monkeypatch):
