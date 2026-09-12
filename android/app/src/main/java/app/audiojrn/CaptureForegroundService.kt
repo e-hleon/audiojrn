@@ -1,7 +1,9 @@
 package app.audiojrn
 
 import android.app.*
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.*
 import android.os.*
@@ -184,6 +186,11 @@ class CaptureForegroundService : Service() {
 
     private fun startContinuousSession() {
         if (mutableState.value != CaptureSessionState.IDLE) return
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            mutableError.value = "No se puede acceder al micrófono"
+            showMessage("Concede el permiso de micrófono para iniciar la captura")
+            return
+        }
         runCatching {
             prepareCapture(CaptureMode.CONTINUOUS); mutableState.value = recordingCaptureState(CaptureMode.CONTINUOUS)
             startForegroundNotification(); if (backend != null) ensureUploadLoop(); startContinuousBlock()
@@ -208,6 +215,9 @@ class CaptureForegroundService : Service() {
     private suspend fun continuousLoop() {
         val minimum = AudioRecord.getMinBufferSize(AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         check(minimum > 0)
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            throw SecurityException("RECORD_AUDIO permission is not granted")
+        }
         val record = AudioRecord(MediaRecorder.AudioSource.MIC, AUDIO_SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, maxOf(minimum, AUDIO_FRAME_SAMPLES * 8))
         check(record.state == AudioRecord.STATE_INITIALIZED); audioRecord = record
         val source: PcmAudioSource = AndroidAudioRecordSource(record); val buffer = ShortArray(AUDIO_FRAME_SAMPLES * 4)
