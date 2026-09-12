@@ -1,4 +1,5 @@
 <resources>
+    <color name="ic_launcher_background">#05224E</color>
     <color name="widget_surface">#F8F7FF</color>
     <color name="widget_on_surface">#1C1B20</color>
     <color name="widget_on_surface_variant">#625B71</color>

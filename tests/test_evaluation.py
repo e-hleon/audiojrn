@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from evaluation.common import corpus_wer, evidence_matches, match_items, normalize_text, prf, real_time_factor
-from evaluation.llm.run import run
+from evaluation.llm.run import expected_categories, run
 
 
 def test_normalization_and_wer_are_transparent():
@@ -19,6 +19,15 @@ def test_evidence_matching_is_literal_light_normalization():
 def test_counts_and_prf():
     assert match_items([{"evidence": "uno"}], [{"evidence": "uno"}, {"evidence": "dos"}]) == {"tp": 1, "fp": 1, "fn": 0}
     assert prf(2, 1, 1) == {"tp": 2, "fp": 1, "fn": 1, "precision": 2 / 3, "recall": 2 / 3, "f1": 2 / 3}
+
+
+def test_evaluation_reports_the_current_analysis_categories():
+    assert expected_categories({"highlights": [{"evidence": "h"}], "tasks": [], "events": [{"evidence": "e"}]}) == {
+        "highlights": [{"evidence": "h"}], "tasks": [], "events": [{"evidence": "e"}],
+    }
+    assert expected_categories({"decisions": [{"evidence": "d"}], "tasks": [], "reminders": [{"evidence": "r"}]}) == {
+        "highlights": [{"evidence": "d"}], "tasks": [{"evidence": "r"}], "events": [],
+    }
 
 
 def test_fixture_is_readable_and_report_supports_small_data(tmp_path, monkeypatch):

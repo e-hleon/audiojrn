@@ -13,6 +13,20 @@ from app.analysis import OpenAIAnalyzer
 from evaluation.common import append_jsonl, match_items, prf, read_jsonl
 
 
+CURRENT_CATEGORIES = ("highlights", "tasks", "events")
+
+
+def expected_categories(expected: dict) -> dict:
+    """Map legacy fixtures while reporting the current analysis contract."""
+    if any(category in expected for category in CURRENT_CATEGORIES):
+        return {category: expected.get(category, []) for category in CURRENT_CATEGORIES}
+    return {
+        "highlights": expected.get("decisions", []),
+        "tasks": [*expected.get("tasks", []), *expected.get("reminders", [])],
+        "events": [],
+    }
+
+
 def run(fixtures: Path, output_dir: Path, model: str | None, max_cases: int, resume: bool) -> Path:
     cases = read_jsonl(fixtures)[:max_cases]
     if model:
@@ -36,10 +50,10 @@ def run(fixtures: Path, output_dir: Path, model: str | None, max_cases: int, res
         append_jsonl(output, record)
     records = read_jsonl(output)
     by_id = {case["id"]: case for case in cases}
-    categories = {category: {"tp": 0, "fp": 0, "fn": 0} for category in ("decisions", "tasks", "reminders")}
+    categories = {category: {"tp": 0, "fp": 0, "fn": 0} for category in CURRENT_CATEGORIES}
     valid = [row for row in records if row.get("status") == "ok"]
     for row in valid:
-        expected = by_id.get(row["id"], {}).get("expected", {})
+        expected = expected_categories(by_id.get(row["id"], {}).get("expected", {}))
         prediction = row["prediction"]
         for category in categories:
             matched = match_items(expected.get(category, []), prediction.get(category, []))

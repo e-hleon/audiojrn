@@ -13,7 +13,7 @@ class Settings:
     def from_env(cls) -> "Settings":
         database_url = os.getenv(
             "DATABASE_URL",
-            "postgresql+psycopg://audio_tfm:audio_tfm_dev@localhost:5432/audio_tfm",
+            "postgresql+psycopg://audiojrn:audiojrn_dev@localhost:5432/audiojrn",
         )
         timezone = os.getenv("APP_TIMEZONE", "UTC")
         try:

@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: audiojrn
+          POSTGRES_USER: audiojrn
+          POSTGRES_PASSWORD: audiojrn_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U audiojrn -d audiojrn"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install Python test dependencies
+        run: python -m pip install -r requirements-test.txt
+      - name: Test backend and migrations
+        env:
+          DATABASE_URL: postgresql+psycopg://audiojrn:audiojrn_ci@localhost:5432/audiojrn
+          APP_TIMEZONE: UTC
+        run: |
+          alembic upgrade head
+          python -m pytest -q
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check Android privacy surface
+        run: python3 scripts/check_android_privacy.py
+      - name: Test Android
+        working-directory: android
+        run: ./gradlew testDebugUnitTest lintDebug assembleDebug compileDebugAndroidTestKotlin
+
+  build:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Validate signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for required_secret in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!required_secret}" ]]; then
+              echo "::error::Missing required release signing secret: $required_secret"
+              exit 1
+            fi
+          done
+      - name: Restore release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/audiojrn-release.jks"
+          chmod 600 "$RUNNER_TEMP/audiojrn-release.jks"
+      - name: Verify tag matches Android version
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          version_name="$(sed -nE 's/.*versionName = "([^"]+)".*/\1/p' android/app/build.gradle.kts)"
+          test -n "$version_name"
+          test "$GITHUB_REF_NAME" = "v$version_name"
+      - name: Build signed release APK
+        working-directory: android
+        env:
+          AUDIOJRN_KEYSTORE_PATH: ${{ runner.temp }}/audiojrn-release.jks
+          AUDIOJRN_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          AUDIOJRN_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          AUDIOJRN_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease
+      - name: Verify, name, and checksum APK
+        run: |
+          set -euo pipefail
+          apk="$(find android/app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' ! -name '*-unsigned.apk' -print -quit)"
+          test -n "$apk"
+          apksigner="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          test -x "$apksigner"
+          "$apksigner" verify "$apk"
+          version_name="$(sed -nE 's/.*versionName = "([^"]+)".*/\1/p' android/app/build.gradle.kts)"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/tags/v* ]]; then
+            apk_name="AudioJrn-$GITHUB_REF_NAME.apk"
+          else
+            apk_name="AudioJrn-v$version_name-rc.apk"
+          fi
+          release_dir="$RUNNER_TEMP/audiojrn-release"
+          mkdir -p "$release_dir"
+          cp "$apk" "$release_dir/$apk_name"
+          (
+            cd "$release_dir"
+            sha256sum "$apk_name" > "$apk_name.sha256"
+          )
+      - name: Upload signed release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: audiojrn-release-${{ github.sha }}
+          path: ${{ runner.temp }}/audiojrn-release/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: audiojrn-release-${{ github.sha }}
+          path: release
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "release/AudioJrn-$GITHUB_REF_NAME.apk" \
+            "release/AudioJrn-$GITHUB_REF_NAME.apk.sha256" \
+            LICENSE \
+            THIRD_PARTY_NOTICES.md \
+            --title "AudioJrn $GITHUB_REF_NAME" \
+            --generate-notes

@@ -438,6 +438,10 @@ def validate_task_parent(session: Session, task_id: uuid.UUID | None, parent_id:
         raise ValueError("La tarea padre no existe")
     if task_id == parent_id or parent.parent_id is not None:
         raise ValueError("Solo se permite un nivel de subtareas")
+    if task_id is not None and session.scalar(
+        select(TaskItem.id).where(TaskItem.parent_id == task_id).limit(1)
+    ) is not None:
+        raise ValueError("Una tarea con subtareas no puede convertirse en subtarea")
 
 
 def create_task_item(session: Session, **values) -> TaskItem:

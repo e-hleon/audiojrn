@@ -23,7 +23,7 @@ from app.settings import Settings
 from app.time_utils import day_interval, ensure_aware, to_utc
 import app.main as main_module
 from app.main import create_app
-from app.analysis import AnalysisNetworkFailed, DailySummaryGeneration
+from app.analysis import AnalysisNetworkFailed, AnalysisNotConfigured, DailySummaryGeneration
 from app.schemas import AnalysisResult, DailySummaryResult, EventCandidate, Task
 
 
@@ -235,6 +235,64 @@ class HttpFakeAnalyzer:
             result=DailySummaryResult(summary="Resumen del día", highlights=[]),
             model="fake-daily-llm",
         )
+
+
+class UnconfiguredAnalyzer:
+    model = "unconfigured"
+
+    def available(self):
+        return False
+
+    def analyze(self, *args, **kwargs):
+        raise AnalysisNotConfigured("El análisis LLM no está configurado")
+
+    def summarize_day(self, *args, **kwargs):
+        raise AnalysisNotConfigured("El análisis LLM no está configurado")
+
+
+def test_basic_capture_and_continuous_finalize_work_without_openai(db_engine, session):
+    analyzer = UnconfiguredAnalyzer()
+    session_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    with TestClient(create_app(HttpFakeTranscriber, lambda: analyzer, lambda: Session(db_engine))) as client:
+        assert client.get("/health").json()["analysis_configured"] is False
+        manual = client.post(
+            "/process", files={"file": ("manual.wav", b"audio")},
+            data={"recorded_at": "2026-09-12T10:00:00+00:00"},
+        )
+        assert manual.status_code == 200
+        assert manual.json()["transcription"]["text"] == "Texto persistido"
+        assert manual.json()["analysis"] == {"highlights": [], "tasks": [], "events": []}
+        chunk = client.post(
+            "/process", files={"file": ("continuous.wav", b"audio")}, data={
+                "capture_mode": "continuous", "capture_session_id": session_id,
+                "chunk_index": "0", "recorded_at": "2026-09-12T11:00:00+00:00",
+            },
+        )
+        assert chunk.status_code == 200
+        finalized = client.post(f"/continuous-sessions/{session_id}/finalize", json={"last_chunk_index": 0})
+        assert finalized.status_code == 200
+        assert finalized.json()["status"] == "complete"
+        assert finalized.json()["analysis"] == {"highlights": [], "tasks": [], "events": []}
+        day = client.get("/days/2026-09-12")
+        assert day.status_code == 200
+        assert len(day.json()["interactions"]) == 2
+        assert {item["transcription"]["text"] for item in day.json()["interactions"]} == {"Texto persistido"}
+        assert client.post("/analyses", json={"text": "Texto persistido"}).status_code == 503
+        assert client.post("/days/2026-09-12/summary").status_code == 503
+
+
+def test_search_returns_the_backend_canonical_day(db_engine, session, monkeypatch):
+    monkeypatch.setenv("APP_TIMEZONE", "UTC")
+    interaction = Interaction(**interaction_values(datetime(2026, 3, 29, 22, 30, tzinfo=timezone.utc)))
+    interaction.transcription = "Buscar frontera"
+    session.add(interaction)
+    session.commit()
+    with TestClient(create_app(HttpFakeTranscriber, HttpFakeAnalyzer, lambda: Session(db_engine))) as client:
+        search = client.get("/interactions", params={"q": "frontera"})
+        assert search.status_code == 200
+        assert search.json()[0]["day"] == "2026-03-29"
+        detail = client.get("/days/2026-03-29")
+        assert [item["id"] for item in detail.json()["interactions"]] == [str(interaction.id)]
 
 
 class SessionFakeAnalyzer(HttpFakeAnalyzer):
@@ -1018,6 +1076,54 @@ def test_client_task_uuid_is_idempotent_and_parent_group_is_authoritative(db_eng
     assert repeated.json()["text"] == "Hija"
     session.expire_all()
     assert session.get(TaskItem, requested).group_name == "Casa"
+
+
+def test_task_creation_accepts_completed_and_defaults_to_pending(db_engine, session):
+    with TestClient(create_app(HttpFakeTranscriber, HttpFakeAnalyzer, lambda: Session(db_engine))) as client:
+        completed = client.post("/tasks", json={"text": "Terminada", "completed": True})
+        defaulted = client.post("/tasks", json={"text": "Pendiente"})
+    assert completed.status_code == defaulted.status_code == 200
+    assert completed.json()["completed"] is True
+    assert defaulted.json()["completed"] is False
+
+
+@pytest.mark.parametrize("field", ("text", "completed", "sort_order", "all_day"))
+def test_task_patch_rejects_explicit_null_for_non_nullable_fields(db_engine, session, field):
+    task = TaskItem(text="Pendiente")
+    session.add(task)
+    session.commit()
+    with TestClient(create_app(HttpFakeTranscriber, HttpFakeAnalyzer, lambda: Session(db_engine))) as client:
+        response = client.patch(f"/tasks/{task.id}", json={field: None})
+    assert response.status_code == 422
+    session.expire_all()
+    assert session.get(TaskItem, task.id).text == "Pendiente"
+
+
+def test_task_with_children_cannot_become_a_subtask(db_engine, session):
+    parent = TaskItem(text="Padre")
+    destination = TaskItem(text="Destino")
+    session.add_all([parent, destination])
+    session.flush()
+    session.add(TaskItem(text="Hija", parent_id=parent.id))
+    session.commit()
+    with TestClient(create_app(HttpFakeTranscriber, HttpFakeAnalyzer, lambda: Session(db_engine))) as client:
+        response = client.patch(f"/tasks/{parent.id}", json={"parent_id": str(destination.id)})
+    assert response.status_code == 422
+    session.expire_all()
+    assert session.get(TaskItem, parent.id).parent_id is None
+
+
+def test_days_activity_includes_the_requested_last_day_only(db_engine, session, monkeypatch):
+    monkeypatch.setenv("APP_TIMEZONE", "UTC")
+    session.add_all([
+        Interaction(**interaction_values(datetime(2026, 9, 12, 12, tzinfo=timezone.utc))),
+        Interaction(**interaction_values(datetime(2026, 9, 13, 12, tzinfo=timezone.utc))),
+    ])
+    session.commit()
+    with TestClient(create_app(HttpFakeTranscriber, HttpFakeAnalyzer, lambda: Session(db_engine))) as client:
+        response = client.get("/days/activity", params={"from": "2026-09-12", "to": "2026-09-12"})
+    assert response.status_code == 200
+    assert response.json()["days"] == ["2026-09-12"]
 
 
 def test_day_uses_madrid_local_day_and_dst(db_engine, session, monkeypatch):

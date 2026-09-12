@@ -6,13 +6,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
-    <application android:name=".AudioDiaryApplication" android:theme="@style/Theme.AudioDiary" android:label="AudioJrn" android:allowBackup="false">
+    <application android:name=".AudioJrnApplication" android:theme="@style/Theme.AudioJrn" android:label="AudioJrn" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:usesCleartextTraffic="true">
         <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
         <service android:name=".CaptureForegroundService" android:exported="false" android:foregroundServiceType="microphone" />
         <receiver android:name=".TaskWidgetProvider" android:exported="false">
-            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="es.hector.audio_diary.TOGGLE_TASK"/></intent-filter>
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="app.audiojrn.TOGGLE_TASK"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/task_widget_info"/>
         </receiver>
         <service android:name=".TaskWidgetService" android:permission="android.permission.BIND_REMOTEVIEWS" android:exported="false" />

@@ -1,4 +1,8 @@
-# AudioJrn
+<p align="center">
+  <img src="assets/audiojrn-logo.png" width="160" alt="AudioJrn logo">
+</p>
+
+<h1 align="center">AudioJrn</h1>
 
 AudioJrn permite grabar notas de audio desde Android y procesarlas con un backend
 local. El backend transcribe el audio, puede generar análisis estructurado cuando se
@@ -51,6 +55,16 @@ Para usar otro puerto o permitir acceso desde una LAN de confianza, ajustar
 al host y puerto accesibles desde el dispositivo; se establece desde la pantalla de
 Configuración de la aplicación.
 
+## Conectividad y seguridad
+
+AudioJrn admite un backend HTTP configurado por la persona usuaria, por ejemplo
+`http://192.168.x.x:8000` o a través de una VPN privada. HTTP no cifra el tráfico y
+el backend aún no incorpora autenticación. Por defecto Compose queda limitado a
+loopback/local; si se habilita el acceso desde otros dispositivos, úsalo solo en una
+red local de confianza o VPN privada. No expongas directamente el puerto a Internet:
+para acceso público remoto se requiere HTTPS y una capa adecuada de autenticación o
+reverse proxy.
+
 ## Android
 
 Desde el directorio `android/`, compilar la APK de depuración con el Gradle Wrapper:
@@ -95,3 +109,8 @@ docker compose down
 ```
 
 Los volúmenes de PostgreSQL y del modelo se conservan para el siguiente arranque.
+
+## License
+
+AudioJrn is licensed under the [Apache License 2.0](LICENSE). Third-party
+components retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -1,14 +1,13 @@
-"""Migration rehearsal in a separate schema of the disposable test database."""
-import json
+"""Migration rehearsal from an empty schema of the disposable test database."""
 import os
 import subprocess
 import uuid
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 
 
-def test_upgrade_0002_with_historical_rows_preserves_data_and_backfills_actions():
+def test_upgrade_head_creates_current_schema_from_empty_database():
     url = os.environ.get("DATABASE_URL")
     if not url:
         import pytest
@@ -23,35 +22,65 @@ def test_upgrade_0002_with_historical_rows_preserves_data_and_backfills_actions(
     def migrate(target, operation="upgrade"):
         subprocess.run(["alembic", operation, target], env=env, check=True, capture_output=True)
     try:
-        migrate("20260906_0002")
-        interaction_id = uuid.uuid4()
-        analysis = {"summary": "Synthetic", "topics": [], "decisions": [],
-                    "tasks": [{"text": "Synthetic task", "evidence": "Synthetic", "assignee": None, "due_date": "2026-09-10"}], "reminders": []}
+        migrate("head")
+        migrate("head")
+        inspector = inspect(isolated)
+        assert {"interactions", "daily_summaries", "continuous_sessions", "proposed_actions", "task_items"}.issubset(
+            inspector.get_table_names()
+        )
+        assert {column["name"] for column in inspector.get_columns("interactions")} == {
+            "id", "capture_mode", "capture_session_id", "chunk_index", "capture_chunk_id",
+            "recorded_at", "created_at", "updated_at", "transcription", "language",
+            "transcription_model", "transcription_device", "transcription_compute_type",
+            "analysis", "analysis_model",
+        }
+        assert {column["name"] for column in inspector.get_columns("daily_summaries")} == {
+            "id", "day", "timezone", "result", "source_fingerprint", "llm_model",
+            "generated_at", "manually_edited", "created_at", "updated_at",
+        }
+        assert {column["name"] for column in inspector.get_columns("continuous_sessions")} == {
+            "id", "started_at", "last_chunk_index", "status", "analysis", "analysis_model",
+            "source_fingerprint", "finalized_at", "created_at", "updated_at",
+        }
+        assert {column["name"] for column in inspector.get_columns("proposed_actions")} == {
+            "id", "source_key", "kind", "status", "title", "due_text", "start_at", "end_at",
+            "all_day", "location", "notes", "evidence", "source_interaction_id",
+            "source_session_id", "created_at", "updated_at",
+        }
+        assert {column["name"] for column in inspector.get_columns("task_items")} == {
+            "id", "text", "completed", "group_name", "parent_id", "sort_order", "due_at",
+            "all_day", "source_action_id", "created_at", "updated_at",
+        }
         with isolated.begin() as connection:
-            connection.execute(text("""INSERT INTO interactions
-                (id, recorded_at, transcription, transcription_model, analysis)
-                VALUES (:id, '2026-09-07T17:00:00+02:00', 'Synthetic', 'fake', CAST(:analysis AS jsonb))"""),
-                {"id": interaction_id, "analysis": json.dumps(analysis)})
-            connection.execute(text("""INSERT INTO daily_summaries
-                (id, day, timezone, result, source_fingerprint, generated_at)
-                VALUES (:id, '2026-09-07', 'UTC', CAST(:result AS jsonb), :fingerprint, now())"""),
-                {"id": uuid.uuid4(), "result": json.dumps({"summary": "Synthetic", "highlights": []}), "fingerprint": "a" * 64})
-        migrate("head")
-        migrate("head")
-        with isolated.begin() as connection:
-            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "20260909_0007"
-            assert connection.scalar(text("SELECT manually_edited FROM daily_summaries LIMIT 1")) is False
-            assert connection.scalar(text("SELECT count(*) FROM interactions")) == 1
-            assert connection.scalar(text("SELECT capture_mode FROM interactions")) == "manual"
-            assert connection.scalar(text("SELECT count(*) FROM proposed_actions")) == 1
-            assert connection.scalar(text("SELECT start_at FROM proposed_actions")) == "2026-09-10"
-            assert connection.scalar(text("SELECT all_day FROM proposed_actions")) is True
-            connection.execute(text("UPDATE proposed_actions SET title='Reviewed', status='dismissed'"))
-        migrate("20260907_0003", "downgrade")
-        migrate("head")
-        with isolated.connect() as connection:
-            assert connection.scalar(text("SELECT title FROM proposed_actions")) == "Reviewed"
-            assert connection.scalar(text("SELECT status FROM proposed_actions")) == "dismissed"
+            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "20260912_0001"
+        assert {"ix_interactions_recorded_at", "ix_interactions_capture_session_id"}.issubset({
+            index["name"] for index in inspector.get_indexes("interactions")
+        })
+        assert {"ix_task_items_group_order"}.issubset({
+            index["name"] for index in inspector.get_indexes("task_items")
+        })
+        assert ("capture_chunk_id",) in {
+            tuple(constraint["column_names"]) for constraint in inspector.get_unique_constraints("interactions")
+        }
+        assert ("day",) in {
+            tuple(constraint["column_names"]) for constraint in inspector.get_unique_constraints("daily_summaries")
+        }
+        assert ("source_key",) in {
+            tuple(constraint["column_names"]) for constraint in inspector.get_unique_constraints("proposed_actions")
+        }
+        assert ("source_action_id",) in {
+            tuple(constraint["column_names"]) for constraint in inspector.get_unique_constraints("task_items")
+        }
+        assert {
+            (tuple(constraint["constrained_columns"]), constraint["referred_table"])
+            for constraint in inspector.get_foreign_keys("task_items")
+        } == {
+            (("parent_id",), "task_items"),
+            (("source_action_id",), "proposed_actions"),
+        }
+        assert "parent_id IS NULL OR parent_id <> id" in {
+            constraint["sqltext"] for constraint in inspector.get_check_constraints("task_items")
+        }
     finally:
         isolated.dispose()
         with engine.begin() as connection:

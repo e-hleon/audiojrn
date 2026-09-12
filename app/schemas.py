@@ -140,6 +140,7 @@ class InteractionResponse(StrictModel):
     transcription: InteractionTranscription
     analysis: AnalysisResult
     analysis_model: str | None
+    day: date
 
 
 class DailySummaryState(StrictModel):
@@ -288,6 +289,7 @@ class DailySummaryUpdate(StrictModel):
 class TaskItemCreate(StrictModel):
     id: UUID | None = None
     text: Annotated[str, Field(min_length=1, max_length=10_000)]
+    completed: bool = False
     group_name: str | None = None
     parent_id: UUID | None = None
     sort_order: int = 0
@@ -303,6 +305,13 @@ class TaskItemUpdate(StrictModel):
     sort_order: int | None = None
     due_at: datetime | None = None
     all_day: bool | None = None
+
+    @model_validator(mode="after")
+    def non_nullable_fields_cannot_be_null(self):
+        for field in ("text", "completed", "sort_order", "all_day"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"{field} no puede ser nulo")
+        return self
 
 
 class TaskItemResponse(StrictModel):

@@ -280,6 +280,9 @@ def create_app(transcriber_factory=Transcriber, analyzer_factory=OpenAIAnalyzer,
             raise HTTPException(503, "No se pudo guardar la interacción") from exc
 
     def interaction_response(interaction) -> InteractionResponse:
+        local_day = to_utc(interaction.recorded_at).astimezone(
+            ZoneInfo(app.state.settings.app_timezone)
+        ).date()
         return InteractionResponse(
             id=interaction.id,
             capture_mode=interaction.capture_mode,
@@ -297,6 +300,7 @@ def create_app(transcriber_factory=Transcriber, analyzer_factory=OpenAIAnalyzer,
             },
             analysis=AnalysisResult.model_validate(interaction.analysis),
             analysis_model=interaction.analysis_model,
+            day=local_day,
         )
 
     def daily_summary_state(summary, fingerprint: str) -> DailySummaryState:
@@ -464,11 +468,14 @@ def create_app(transcriber_factory=Transcriber, analyzer_factory=OpenAIAnalyzer,
             # Silence is valid Continuous audio; retain the index so finalize can
             # prove completeness even when one chunk has no recognized words.
             analysis = AnalysisResult()
-        else:
+        elif app.state.analyzer.available():
             reference = parsed_recorded_at.astimezone(ZoneInfo(app.state.settings.app_timezone)).isoformat()
             analysis = await run_in_threadpool(
                 analyze_text, transcription["text"], reference, app.state.settings.app_timezone
             )
+        else:
+            # La ausencia de proveedor LLM no debe bloquear la captura básica.
+            analysis = AnalysisResult()
         interaction = await run_in_threadpool(
             persist_interaction,
             parsed_recorded_at,
@@ -531,12 +538,16 @@ def create_app(transcriber_factory=Transcriber, analyzer_factory=OpenAIAnalyzer,
                 reference = to_utc(first.recorded_at).astimezone(
                     ZoneInfo(app.state.settings.app_timezone)
                 ).isoformat()
-                analysis = await run_in_threadpool(
-                    analyze_text,
-                    text,
-                    reference,
-                    app.state.settings.app_timezone,
-                ) if text.strip() else AnalysisResult()
+                analysis = (
+                    await run_in_threadpool(
+                        analyze_text,
+                        text,
+                        reference,
+                        app.state.settings.app_timezone,
+                    )
+                    if text.strip() and app.state.analyzer.available()
+                    else AnalysisResult()
+                )
                 continuous_session.last_chunk_index = request.last_chunk_index
                 continuous_session.status = "complete"
                 continuous_session.analysis = analysis.model_dump(mode="json")
@@ -836,7 +847,7 @@ def create_app(transcriber_factory=Transcriber, analyzer_factory=OpenAIAnalyzer,
         if to < from_:
             raise HTTPException(422, "to debe ser posterior a from")
         start, _ = day_interval(from_, app.state.settings.app_timezone)
-        _, end = day_interval(to.fromordinal(to.toordinal() + 1), app.state.settings.app_timezone)
+        _, end = day_interval(to, app.state.settings.app_timezone)
         try:
             with app.state.session_factory() as session:
                 days = await run_in_threadpool(activity_days, session, start, end, app.state.settings.app_timezone)

@@ -10,7 +10,7 @@ services:
       WHISPER_COMPUTE_TYPE: int8_float16
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.4-mini}
-      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-audio_tfm}:${POSTGRES_PASSWORD:-audio_tfm_dev}@postgres:5432/${POSTGRES_DB:-audio_tfm}}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-audiojrn}:${POSTGRES_PASSWORD:-audiojrn_dev}@postgres:5432/${POSTGRES_DB:-audiojrn}}
       APP_TIMEZONE: ${APP_TIMEZONE:-UTC}
     volumes:
       - models:/models
@@ -35,9 +35,9 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-audio_tfm}
-      POSTGRES_USER: ${POSTGRES_USER:-audio_tfm}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-audio_tfm_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-audiojrn}
+      POSTGRES_USER: ${POSTGRES_USER:-audiojrn}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-audiojrn_dev}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

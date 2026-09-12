@@ -35,6 +35,13 @@ android/.gradle/
 android/**/build/
 android/local.properties
 android/*.apk
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+keystore.properties
+signing.properties
 
 # IDE / OS
 .vscode/

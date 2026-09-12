@@ -6,14 +6,52 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
 }
 
+val releaseKeystorePath = providers.environmentVariable("AUDIOJRN_KEYSTORE_PATH").orNull
+val releaseKeystorePassword = providers.environmentVariable("AUDIOJRN_KEYSTORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("AUDIOJRN_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("AUDIOJRN_KEY_PASSWORD").orNull
+val releaseSigningAvailable = listOf(
+    releaseKeystorePath,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
+
 android {
-    namespace = "es.hector.audio_diary"
+    namespace = "app.audiojrn"
     compileSdk = 35
-    defaultConfig { applicationId = "es.hector.audio_diary"; minSdk = 26; targetSdk = 35; versionCode = 1; versionName = "0.1"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+    defaultConfig { applicationId = "app.audiojrn"; minSdk = 26; targetSdk = 35; versionCode = 1; versionName = "0.1.0"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     buildFeatures { compose = true; buildConfig = true }
-    buildTypes { release { isMinifyEnabled = false } }
+    signingConfigs {
+        create("release") {
+            if (releaseSigningAvailable) {
+                storeFile = file(releaseKeystorePath!!)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            if (releaseSigningAvailable) signingConfig = signingConfigs.getByName("release")
+        }
+    }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlin { jvmToolchain(17) }
+}
+
+tasks.register("validateReleaseSigning") {
+    doLast {
+        check(releaseSigningAvailable) {
+            "Release signing is unavailable. Set AUDIOJRN_KEYSTORE_PATH, " +
+                "AUDIOJRN_KEYSTORE_PASSWORD, AUDIOJRN_KEY_ALIAS, and AUDIOJRN_KEY_PASSWORD."
+        }
+    }
+}
+tasks.matching { it.name == "assembleRelease" }.configureEach {
+    dependsOn("validateReleaseSigning")
 }
 
 kapt {

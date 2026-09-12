@@ -11,8 +11,8 @@ errors = [f"forbidden permission: {item}" for item in forbidden if item in text]
 if "OPENAI_API_KEY" in text:
     errors.append("OPENAI_API_KEY appears under android/")
 release_manifest = ROOT / "app/src/main/AndroidManifest.xml"
-if "usesCleartextTraffic=\"true\"" in release_manifest.read_text(encoding="utf-8"):
-    errors.append("cleartext traffic is enabled in the main manifest")
+if "usesCleartextTraffic=\"true\"" not in release_manifest.read_text(encoding="utf-8"):
+    errors.append("main manifest must explicitly allow user-configured HTTP backends")
 required_permissions = {
     "android.permission.INTERNET",
     "android.permission.RECORD_AUDIO",
