@@ -14,6 +14,9 @@ except ImportError:  # permite ejecutar las pruebas de algoritmos sin dependenci
     _jiwer_cer = _jiwer_wer = None
 
 
+ANALYSIS_CATEGORIES = ("highlights", "tasks", "events")
+
+
 def _distance(left: list[str], right: list[str]) -> int:
     previous = list(range(len(right) + 1))
     for i, first in enumerate(left, 1):
@@ -97,14 +100,27 @@ def evidence_matches(predicted: str, expected: str) -> bool:
     return bool(left and right and (left == right or left in right or right in left))
 
 
-def match_items(expected: list[dict], predicted: list[dict]) -> dict[str, int]:
-    """Matching 1:1 greedy por evidencia, sin juez semántico."""
+def matched_item_pairs(expected: list[dict], predicted: list[dict]) -> list[tuple[dict, dict]]:
+    """Empareja elementos 1:1 por evidencia, sin recurrir a un juez semántico."""
     used: set[int] = set()
-    tp = 0
+    pairs = []
     for wanted in expected:
         for index, actual in enumerate(predicted):
             if index not in used and evidence_matches(actual.get("evidence", ""), wanted.get("evidence", "")):
                 used.add(index)
-                tp += 1
+                pairs.append((wanted, actual))
                 break
+    return pairs
+
+
+def match_items(expected: list[dict], predicted: list[dict]) -> dict[str, int]:
+    """Cuenta TP, FP y FN a partir del emparejamiento por evidencia."""
+    tp = len(matched_item_pairs(expected, predicted))
     return {"tp": tp, "fp": len(predicted) - tp, "fn": len(expected) - tp}
+
+
+def field_accuracy(pairs: list[tuple[dict, dict]], field: str) -> dict[str, float | int | None]:
+    """Comprueba por igualdad un campo de elementos previamente emparejados."""
+    total = len(pairs)
+    correct = sum(expected.get(field) == predicted.get(field) for expected, predicted in pairs)
+    return {"correct": correct, "total": total, "accuracy": correct / total if total else None}

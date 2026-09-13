@@ -57,13 +57,13 @@ Configuración de la aplicación.
 
 ## Conectividad y seguridad
 
-AudioJrn admite un backend HTTP configurado por la persona usuaria, por ejemplo
-`http://192.168.x.x:8000` o a través de una VPN privada. HTTP no cifra el tráfico y
-el backend aún no incorpora autenticación. Por defecto Compose queda limitado a
-loopback/local; si se habilita el acceso desde otros dispositivos, úsalo solo en una
-red local de confianza o VPN privada. No expongas directamente el puerto a Internet:
-para acceso público remoto se requiere HTTPS y una capa adecuada de autenticación o
-reverse proxy.
+La aplicación Android admite direcciones HTTP y HTTPS. El despliegue Compose queda
+limitado por defecto a loopback y no configura terminación TLS ni autenticación. Para
+acceso desde una red local puede configurarse, por ejemplo,
+`http://192.168.x.x:8000`; HTTP no cifra el tráfico. Para acceso remoto puede
+situarse un proxy inverso con HTTPS delante de FastAPI sin modificar la aplicación
+Android. Antes de exponer el servicio públicamente sigue siendo necesario añadir un
+mecanismo adecuado de autenticación.
 
 ## Android
 

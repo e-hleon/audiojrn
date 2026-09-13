@@ -135,7 +135,8 @@ def test_temporal_context_is_separate_from_transcription(monkeypatch):
     assert "Europe/Madrid" in instructions
     assert "pasado mañana" in instructions
     assert "YYYY-MM-DD" in instructions
-    assert "No cambies una tarea en recordatorio ni un recordatorio en tarea solo por su fecha." in instructions
+    assert "Incluye en tasks las acciones" in instructions
+    assert "recordatorios pedidos de forma explícita" in instructions
     assert "dentro de N días" in instructions
     assert "dentro de una semana" in instructions
     assert "La semana que viene" in instructions

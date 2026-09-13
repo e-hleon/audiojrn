@@ -21,7 +21,7 @@ class AudioTooLong(ValueError):
 
 class Transcriber:
     def __init__(self, model_name=None, device=None, compute_type=None, download_root="/models"):
-        self.model_name = model_name or os.getenv("WHISPER_MODEL", "base")
+        self.model_name = model_name or os.getenv("WHISPER_MODEL", "large-v3")
         self.model = WhisperModel(
             self.model_name,
             device=device or "cuda",

@@ -76,11 +76,11 @@ qué. Sé conservador: no inventes destacados, tareas ni fechas. evidence debe s
 substring contiguo, breve y literal de la transcripción. Cada destacado, tarea o evento debe incluir evidence: una cita breve y literal de
 la transcripción que lo justifique. Si falta contexto para una fecha, usa null. Si no
 hay elementos de una categoría, devuelve una lista vacía. No conviertas información
-descriptiva, deseos vagos ni hechos pasados en tareas. Clasifica como REMINDER cuando
-el usuario pide explícitamente que se le recuerde algo ('recuérdame', 'acuérdame' y
-equivalentes). Clasifica como TASK una acción que el propio usuario pretende o debe
-realizar ('tengo que', 'debo', 'necesito', 'quiero hacer' o 'planeo'), también si
-tiene una fecha; una fecha no convierte una tarea en evento. Clasifica como EVENT un
+descriptiva, deseos vagos ni hechos pasados en tareas. Incluye en tasks las acciones
+que el propio usuario pretende o debe realizar ('tengo que', 'debo', 'necesito',
+'quiero hacer' o 'planeo') y los recordatorios pedidos de forma explícita
+('recuérdame', 'acuérdame' y equivalentes), también si tienen una fecha; una fecha
+no convierte una tarea en evento. Clasifica como EVENT un
 compromiso o actividad programada que ocurre en una fecha ('tengo cita', 'hay una
 reunión', 'el concierto es' o 'tengo clase'). Un deseo vago sin compromiso ni fecha
 no basta para crear una tarea. Para eventos, usa start_at y end_at en ISO-8601 con
@@ -101,8 +101,7 @@ EventCandidate.start_at: si se conoce el día pero no la hora, emite
 YYYY-MM-DD; si se conocen día y hora, emite ISO-8601 con offset. La fecha normalizada
 no necesita ser literal en la transcripción, pero evidence sí debe ser una cita
 literal. Si la fecha o la hora son ambiguas o insuficientes, usa null o conserva el
-texto temporal de forma conservadora; no inventes un día ni una hora. No cambies una
-tarea en recordatorio ni un recordatorio en tarea solo por su fecha.
+texto temporal de forma conservadora; no inventes un día ni una hora.
 
 Para una acción futura con hora numérica sin AM/PM ni parte del día, interpreta por
 defecto las horas 1, 2, 3, 4 y 5 como tarde (13:00, 14:00, 15:00, 16:00 y 17:00).
@@ -209,6 +208,9 @@ class OpenAIAnalyzer:
         self.model = os.getenv("OPENAI_MODEL", DEFAULT_MODEL)
         api_key = os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=api_key, timeout=30.0) if api_key else None
+        # Metadatos de la última llamada para diagnóstico y evaluación secuencial.
+        # No forman parte de la respuesta ni alteran el análisis de producción.
+        self.last_call_metadata: dict[str, str | int | None] = {}
 
     def available(self) -> bool:
         return self.client is not None
@@ -275,6 +277,11 @@ class OpenAIAnalyzer:
         )
 
         usage = response.usage
+        self.last_call_metadata = {
+            "model_effective": getattr(response, "model", self.model),
+            "input_tokens": getattr(usage, "input_tokens", None),
+            "output_tokens": getattr(usage, "output_tokens", None),
+        }
         logging.getLogger("uvicorn.error").info(
             "LLM analysis completed: model=%s latency_ms=%d input_tokens=%s output_tokens=%s",
             response.model,
